@@ -70,4 +70,4 @@ for item in message:
 thefile.close()
 
 if paused_alerts != 0:
-    send_email()
+    send_email() 
