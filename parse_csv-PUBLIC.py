@@ -62,7 +62,7 @@ if function_miss > 0 or owner_miss > 0:
     send_email()
 
 #print(function_miss)
-#print(owner_miss)
+#print(owner_miss) 
 
 
 
