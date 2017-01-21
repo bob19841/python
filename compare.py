@@ -14,3 +14,4 @@ for subfolder in os.listdir(root):
     if subfolder.lower() not in content:
         new_line = 'This folder doesnt belong to an active citrix user "' + subfolder + '"'
         print('This folder doesnt belong to an active citrix user  "' + subfolder + '"')
+ 
