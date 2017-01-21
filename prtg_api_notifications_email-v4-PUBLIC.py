@@ -32,7 +32,7 @@ def send_email():
 
 ### stage vaiables
 user_name = ""
-user_hash = "
+user_hash = ""
 prtg_server = ""
 
 message = ['****** This is the status of The PRTG Notifications ******\n']
