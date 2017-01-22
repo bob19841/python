@@ -7,3 +7,4 @@ startTime = datetime.now()
 
 print('Time to Run script')
 print(datetime.now() - startTime)
+
