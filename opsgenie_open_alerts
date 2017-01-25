@@ -1,0 +1,40 @@
+import requests
+import json
+import datetime
+import smtplib
+
+def send_email(text):
+    text = '\n'.join(text)
+    fromaddr = ''
+    toaddrs = ''
+    msg = "Subject: Ops Genie Open Alerts Report\n\n" + text
+    username = ''
+    password = ''
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username, password)
+    server.sendmail(fromaddr, toaddrs, msg)
+    server.quit()
+
+def process_alert(text):
+    detail = requests.get("https://api.opsgenie.com/v1/json/alert?apiKey=xxxxxxxxxxxxxxxxxxxxxxxxxxxx&status=open")
+    api = json.loads(detail.text)
+    alerts = api['alerts']
+    for alert in alerts:
+        if alert['acknowledged'] == True:
+            acked_state = "True"
+        else:
+            acked_state = "False"
+        time = (alert['createdAt'] / 1000000000)
+        time2 = datetime.datetime.fromtimestamp(time).strftime('%c')
+        line = ((time2[:-6]) + ' | ' + (alert['message'][21:]) + " | " + alert[
+            'owner'] + " | ACK'ed =" + acked_state + ' | Status =' + alert['status'])
+        text.append(line)
+
+startTime = datetime.datetime.now()
+text = []
+process_alert(text)
+send_email(text)
+print('Time to Run script')
+print(datetime.datetime.now() - startTime)
+
