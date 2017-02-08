@@ -1,0 +1,105 @@
+import requests
+import xml.etree.ElementTree as ET
+import paramiko
+#from paramiko import client
+
+def load_switch_list():
+    filename = 'switches.txt'
+    with open(filename) as file_object:
+        switch_ids = file_object.read().split()
+    return switch_ids
+
+def get_prtg_status(switch):
+    user_name = ""
+    user_hash = ""
+    prtg_server = "l"
+
+    message = ['****** This is the status of The PRTG Notifications ******\n']
+    paused_alerts = 0
+    active_alerts = 0
+
+    url = prtg_server + "/api/getsensordetails.xml?id=" + switch + "&username=" + user_name + "&passhash=" + user_hash
+    response = requests.get(url, verify=False)
+    root = ET.fromstring(response.content)
+    #print(root)
+
+    #root = tree.getroot()
+
+    for child in root.iter('lastmessage'):
+        message = child.text
+    for child in root.iter('parentdevicename'):
+        device = child.text
+        # for child in root.iter('parentdeviceid'):
+        #   pdevice = child.text
+    return device, message
+
+def convert_ip(device):
+    device = device.strip()
+    #print(device)
+    if device[-2:-1] == '_':
+        ip = '192.168.23.10' + device[-1:]
+    else:
+        ip = '192.168.23.1' + device[-2:]
+    #print(ip)
+    return ip
+
+def split(message):
+    message = message.strip()
+    #print(message)
+    ActionNeeded = False
+    # ok = 'OK'
+    ports = []
+    if message == 'OK':
+        print("")
+    else:
+        #print('Lets Work')
+        ActionNeeded = True
+        new = message.split()
+        for item in new:
+            if len(item) > 15:
+                if item[-1:] == ",":
+                    item = item[:-1]
+                    ports.append(item)
+        ports.append(item)
+
+    #print(ActionNeeded)
+    # print(ports)
+
+    for int in ports:
+        int = 'GigabitEthernet ' + int[15:]
+        #print(int)
+    return ActionNeeded, ports
+
+def form_command(ports):
+    for port in ports:
+        #print(port)
+        final_command ='conf t && int '
+        final_command += port
+        final_command += " && authenication port-control auto && mkdir "
+        config = (final_command[:-9])
+        return config
+
+def force_dot1x(ip, ports):
+    print("Enabling the following" + ip, ports)
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(
+        paramiko.AutoAddPolicy())
+    ssh.connect(ip, username='',
+                password='')
+    stdin, stdout, stderr = ssh.exec_command(
+        "conf t")
+    for port in ports:
+        stdin.write(port +'\n')
+        stdin.write('authentication port-control auto\n')
+        stdin.flush()
+
+switch_ids = load_switch_list()
+for switch in switch_ids:
+    device, message = get_prtg_status(switch)
+    ip = convert_ip(device)
+    status, ports = split(message)
+    if status == True:
+        device = device.strip()
+        config = form_command(ports)
+        force_dot1x(ip,ports)
+
