@@ -1,0 +1,1 @@
+https://daanlenaerts.com/blog/2016/07/01/python-and-ssh-paramiko-shell/  -- very good guide on ssh - I think this might work well
