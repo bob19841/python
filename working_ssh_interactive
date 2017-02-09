@@ -9,7 +9,7 @@ remote_conn_pre = paramiko.SSHClient()
 remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 # initiate SSH connection
-remote_conn_pre.connect('192.168.11.109', port=22, username='xxxxxxxx', password='xxxxxxxxx', look_for_keys=False, allow_agent=False)
+remote_conn_pre.connect('192.168.11.109', port=22, username='kube', password='XxxxxX', look_for_keys=False, allow_agent=False)
 print("SSH connection established")
 
 # Use invoke_shell to establish an 'interactive session'
@@ -20,6 +20,11 @@ print("Interactive SSH session established")
 output = remote_conn.recv(1000)
 
 # See what we have
+print("Remote ID")
+print(remote_conn.get_id())
+print(remote_conn.exit_status_ready())
+
+
 print('First output after login')
 print(output.decode("utf-8"))
 
@@ -67,3 +72,13 @@ print("After Ping")
 print(output.decode("utf-8"))
 print(type(output))
 
+remote_conn.send("\n")
+remote_conn.send("logout")
+time.sleep(1)
+remote_conn.send("\n")
+time.sleep(11)
+output = remote_conn.recv(5000)
+print("After Log Out")
+print(output.decode("utf-8"))
+print(type(output))
+print(remote_conn.exit_status_ready())
