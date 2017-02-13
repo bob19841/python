@@ -2,3 +2,4 @@ https://daanlenaerts.com/blog/2016/07/01/python-and-ssh-paramiko-shell/  -- very
 https://www.youtube.com/watch?v=b0wk12EwnPQ - nemiko ssh
 http://www.null0.co.uk/2016/01/15/getting-started-with-network-automation-using-python-and-netmiko-part-2/ - netmiko
 https://pynet.twb-tech.com/blog/automation/netmiko.html
+https://kb.paessler.com/en/topic/33903-api-notification
