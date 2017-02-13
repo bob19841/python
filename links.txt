@@ -3,3 +3,18 @@ https://www.youtube.com/watch?v=b0wk12EwnPQ - nemiko ssh
 http://www.null0.co.uk/2016/01/15/getting-started-with-network-automation-using-python-and-netmiko-part-2/ - netmiko
 https://pynet.twb-tech.com/blog/automation/netmiko.html
 https://kb.paessler.com/en/topic/33903-api-notification
+http://www.python-course.eu/python_tkinter.php
+https://daanlenaerts.com/blog/2016/01/02/python-and-ssh-sending-commands-over-ssh-using-paramiko/
+http://www.diveintopython3.net/xml.html
+http://www.virten.net/2014/11/howto-shrink-a-thin-provisioned-virtual-disk-vmdk/
+https://esxi-patches.v-front.de/ESXi-6.0.0.html
+http://www.enterprisedaddy.com/2016/12/how-to-upgrade-esxi-6-0-to-esxi-6-5-using-offline-bundle/
+
+
+
+
+https://app.tutanota.de/#login
+
+
+http://amazingribs.com/recipes/rubs_pastes_marinades_and_brines/meatheads_memphis_dust.html
+http://amazingribs.com/recipes/porknography/best_BBQ_ribs_ever.html
