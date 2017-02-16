@@ -1,105 +1,162 @@
+# -*- coding: utf-8 -*-
+
+
 import requests
 import xml.etree.ElementTree as ET
 import paramiko
-#from paramiko import client
+import time
+import smtplib
+from datetime import datetime
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import sys
+import json
+# get CustomSensorResult from paepy package
+from paepy.ChannelDefinition import CustomSensorResult
 
-def load_switch_list():
-    filename = 'switches.txt'
-    with open(filename) as file_object:
-        switch_ids = file_object.read().split()
-    return switch_ids
 
-def get_prtg_status(switch):
-    user_name = ""
-    user_hash = ""
-    prtg_server = "l"
+if __name__ == "__main__":
+    # interpret first command line parameter as json object
+    data = json.loads(sys.argv[1])
+    password = data['linuxloginpassword']
+    #password = "xxxxxxxxxxxxxxx"
+    port = 0
+    switches_sec = 0
 
-    message = ['****** This is the status of The PRTG Notifications ******\n']
-    paused_alerts = 0
-    active_alerts = 0
+    def load_switch_list():
+        filename = 'D:\Program Files (x86)\PRTG Network Monitor\Custom Sensors\python\switches.txt'
+        with open(filename) as file_object:
+            switch_ids = file_object.read().split()
+        return switch_ids
 
-    url = prtg_server + "/api/getsensordetails.xml?id=" + switch + "&username=" + user_name + "&passhash=" + user_hash
-    response = requests.get(url, verify=False)
-    root = ET.fromstring(response.content)
-    #print(root)
+    def get_prtg_status(switch):
+        user_name = "admin"
+        user_hash = "xxxx"
+        prtg_server = "https://prtg"
 
-    #root = tree.getroot()
+        message = ['****** This is the status of The PRTG Notifications ******\n']
+        paused_alerts = 0
+        active_alerts = 0
 
-    for child in root.iter('lastmessage'):
-        message = child.text
-    for child in root.iter('parentdevicename'):
-        device = child.text
-        # for child in root.iter('parentdeviceid'):
-        #   pdevice = child.text
-    return device, message
+        url = prtg_server + "/api/getsensordetails.xml?id=" + switch + "&username=" + user_name + "&passhash=" + user_hash
+        response = requests.get(url, verify=False)
+        root = ET.fromstring(response.content)
 
-def convert_ip(device):
-    device = device.strip()
-    #print(device)
-    if device[-2:-1] == '_':
-        ip = '192.168.23.10' + device[-1:]
-    else:
-        ip = '192.168.23.1' + device[-2:]
-    #print(ip)
-    return ip
+        for child in root.iter('lastmessage'):
+            message = child.text
+        for child in root.iter('parentdevicename'):
+            device = child.text
+        return device, message
 
-def split(message):
-    message = message.strip()
-    #print(message)
-    ActionNeeded = False
-    # ok = 'OK'
-    ports = []
-    if message == 'OK':
-        print("")
-    else:
-        #print('Lets Work')
-        ActionNeeded = True
-        new = message.split()
-        for item in new:
-            if len(item) > 15:
-                if item[-1:] == ",":
-                    item = item[:-1]
-                    ports.append(item)
-        ports.append(item)
-
-    #print(ActionNeeded)
-    # print(ports)
-
-    for int in ports:
-        int = 'GigabitEthernet ' + int[15:]
-        #print(int)
-    return ActionNeeded, ports
-
-def form_command(ports):
-    for port in ports:
-        #print(port)
-        final_command ='conf t && int '
-        final_command += port
-        final_command += " && authenication port-control auto && mkdir "
-        config = (final_command[:-9])
-        return config
-
-def force_dot1x(ip, ports):
-    print("Enabling the following" + ip, ports)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(
-        paramiko.AutoAddPolicy())
-    ssh.connect(ip, username='',
-                password='')
-    stdin, stdout, stderr = ssh.exec_command(
-        "conf t")
-    for port in ports:
-        stdin.write(port +'\n')
-        stdin.write('authentication port-control auto\n')
-        stdin.flush()
-
-switch_ids = load_switch_list()
-for switch in switch_ids:
-    device, message = get_prtg_status(switch)
-    ip = convert_ip(device)
-    status, ports = split(message)
-    if status == True:
+    def convert_ip(device):
         device = device.strip()
-        config = form_command(ports)
-        force_dot1x(ip,ports)
+        if device[-2:-1] == '_':
+            ip = '192.168.23.10' + device[-1:]
+        else:
+            ip = '192.168.23.1' + device[-2:]
+        return ip
 
+    def split(message):
+        message = message.strip()
+        ActionNeeded = False
+        ports = []
+        if message == 'OK':
+            print("")
+        else:
+            ActionNeeded = True
+            new = message.split()
+            for item in new:
+                if len(item) > 15:
+                    if item[-1:] == ",":
+                        item = item[:-1]
+                        ports.append(item)
+            ports.append(item)
+        for int in ports:
+            int = 'GigabitEthernet ' + int[15:]
+        return ActionNeeded, ports
+
+    def form_command(ports):
+        for port in ports:
+            final_command = 'conf t && int '
+            final_command += port
+            final_command += " && authenication port-control auto && mkdir "
+            config = (final_command[:-9])
+            return config
+
+    def force_dot1x(ip, ports, device, count):
+        ssh = paramiko.SSHClient()
+        remote_conn_pre = paramiko.SSHClient()
+        remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        remote_conn_pre.connect(ip, port=22, username='switchuser', password=password,
+                                look_for_keys=False,
+                                allow_agent=False)
+        remote_conn = remote_conn_pre.invoke_shell()
+        output = remote_conn.recv(1000)
+        remote_conn.send("\n")
+        remote_conn.send("conf t")
+        time.sleep(1)
+        output = remote_conn.recv(5000)
+        remote_conn.send("\n")
+
+        for port in ports:
+            count.append('1')
+            remote_conn.send("int " + port)
+            time.sleep(1)
+            remote_conn.send("\n")
+            remote_conn.send("authentication port-control auto\n")
+            output = remote_conn.recv(5000)
+            time.sleep(1)
+            remote_conn.send("\n")
+            output = remote_conn.recv(5000)
+            time.sleep(1)
+            remote_conn.send("\n")
+            output = remote_conn.recv(5000)
+            line = ("We enabled 802.1x on " + port + " on " + device)
+            text.append(line)
+
+    def send_email(text):
+        text = '\n'.join(text)
+        fromaddr = 'xxxxxxxxx'
+        toaddrs = 'xxxxxxxxxxxxxx'
+        msg = "Subject: 802.1x Report\n\n" + text
+        server = smtplib.SMTP('smtp.local:25')
+        server.sendmail(fromaddr, toaddrs, msg)
+        server.quit()
+
+
+    def update_prtg_status(switch):
+        user_name = "admin"
+        user_hash = "xxxxxxx"
+        prtg_server = "https://prtg"
+        url = prtg_server + "/api/scannow.htm?id=" + switch + "&username=" + user_name + "&passhash=" + user_hash
+        response = requests.get(url, verify=False)
+
+    startTime = datetime.now()
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+    text = ['********* 802.1x Report *********']
+    switch_ids = load_switch_list()
+    count = []
+    sc = 0
+    for switch in switch_ids:
+        sc += 1
+        device, message = get_prtg_status(switch)
+        ip = convert_ip(device)
+        status, ports = split(message)
+
+        if status == True:
+            device = device.strip()
+            force_dot1x(ip, ports, device, count)
+            #print(count)
+            update_prtg_status(switch)
+        else:
+            device = device.strip()
+            line = ("No changes needed on " + device)
+            text.append(line)
+    if len(count) > 0:
+        send_email(text)
+        result = CustomSensorResult("We had work to do!!!,   Report sent!!!")
+    else:
+        result = CustomSensorResult("All ports secure!!!")
+
+    result.add_channel(channel_name="Ports Resolved", unit="port", value=len(count), primary_channel=True)
+    result.add_channel(channel_name="Switches Secured", unit="switch", value=sc)
+    print(result.get_json_result())
