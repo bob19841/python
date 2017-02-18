@@ -1,0 +1,30 @@
+import requests
+import xml.etree.ElementTree as ET
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
+user_name = "xxxxxxx"
+user_hash = =xxxxxx"
+prtg_server = "https://prtg"
+id = '2170'
+list = []
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+url = prtg_server + "/api/table.xml?content=channels&output=xml&columns=name,lastvalue_&id=" + id + "&username=" + user_name + "&passhash=" + user_hash
+#print(url)
+response = requests.get(url, verify=False)
+root = ET.fromstring(response.content)
+
+#print(root.iter)
+
+#for child in root:
+    #print(child.tag)
+
+for child in root.findall('item'):
+    channel = child.find('name').text
+    value = child.find('lastvalue').text
+    info = (channel + ' = ' + value)
+    list.append(info)
+    if info.startswith('Traffic Total'):
+        print(info)
+print(list)
