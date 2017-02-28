@@ -12,3 +12,4 @@ for row in csv_f:
     temp = temp[3:]                           ### Index in to the 4 character
     print(temp.split(',')[0])                 ### Split on the comma and select the fisrt one in the index
 
+ 
